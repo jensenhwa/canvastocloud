@@ -1,0 +1,6 @@
+*/
+*.log
+settings.json
+
+# work in progress
+config.py
