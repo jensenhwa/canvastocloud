@@ -1,4 +1,4 @@
-# Canvas-to-Cloud Sync Tool
+# Canvas2Cloud Sync Tool
 
 Easy-to-use, versatile, platform-independent program that downloads course files from Canvas and syncs them to your cloud storage of choice. Gracefully handles incompatible filenames and preserves deleted/outdated files in a separate folder.
 Works best when run from an always-on, internet-connected machine such as a Raspberry Pi.
