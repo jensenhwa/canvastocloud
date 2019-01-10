@@ -33,7 +33,7 @@ def isfile_insensitive(path):
 
 def add_before_ext(file_name, end)->str:
     temp_name = file_name
-    pos = temp_name.index('.')
+    pos = temp_name.rfind('.')
     if pos == -1:
         temp_name += end
     else:
@@ -62,6 +62,24 @@ def do_all_pages(req_url, headers, method_to_run):
             req_url = ''
         for thing in response.json():
             method_to_run(thing)
+
+
+def recursive_old_dir_move(root_src_dir, root_dst_dir):
+    for src_dir, dirs, files in os.walk(root_src_dir):
+        dst_dir = src_dir.replace(root_src_dir, root_dst_dir, 1)
+        if not os.path.exists(dst_dir):
+            os.makedirs(dst_dir)
+        for file_ in files:
+            src_file = os.path.join(src_dir, file_)
+            dst_file = os.path.join(dst_dir, file_)
+            if os.path.exists(dst_file):
+                # in case of the src and dst are the same file
+                if os.path.samefile(src_file, dst_file):
+                    continue
+                os.rename(dst_file, add_before_ext(dst_file,
+                                                   ' v' + datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
+                                                   .astimezone(local_timezone).strftime(time_fmt)))
+            shutil.move(src_file, dst_dir)
 
 
 class Course:
@@ -112,7 +130,7 @@ class Course:
                     if args.verbosity >= 1:
                         print(" ", dirname, "folder no longer in Canvas, moving to .old")
                     os.makedirs(os.path.join(root, ".old"), exist_ok=True)
-                    shutil.move(os.path.join(root, dirname), os.path.join(root, ".old", dirname))
+                    recursive_old_dir_move(os.path.join(root, dirname), os.path.join(root, ".old", dirname))
 
     def sync_cloud(self):
         for dest in self.rclone:
