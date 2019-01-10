@@ -80,6 +80,7 @@ def recursive_old_dir_move(root_src_dir, root_dst_dir):
                                                    ' v' + datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
                                                    .astimezone(local_timezone).strftime(time_fmt)))
             shutil.move(src_file, dst_dir)
+    shutil.rmtree(root_src_dir)
 
 
 class Course:
