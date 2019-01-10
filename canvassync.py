@@ -121,7 +121,9 @@ class Course:
             rclone = ["rclone", "sync", self.course_dir, dest["drive"] + ":" + dest["path"]]
             if args.dryrun:
                 rclone.append("-n")
-            print(subprocess.run(rclone, capture_output=True, text=True).stderr)
+            rsync_error = subprocess.run(rclone, capture_output=True, text=True).stderr
+            if rsync_error:
+                print(rsync_error)
 
     def _parse_folder(self, folder):
         # Create subfolders
