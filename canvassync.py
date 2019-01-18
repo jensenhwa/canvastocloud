@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.7
 """
-CANVAS FILE SYNC v1.0
+CANVAS FILE SYNC v1.1
     Syncs all Canvas files from specified courses to a local folder,
     then uploads them to cloud storage using rclone.
 by Jensen Hwa
@@ -67,14 +67,13 @@ def do_all_pages(req_url, headers, method_to_run):
 def recursive_old_dir_move(root_src_dir, root_dst_dir):
     for src_dir, dirs, files in os.walk(root_src_dir):
         dst_dir = src_dir.replace(root_src_dir, root_dst_dir, 1)
-        if not os.path.exists(dst_dir):
-            os.makedirs(dst_dir)
+        os.makedirs(dst_dir, exist_ok=True)
         for file_ in files:
             src_file = os.path.join(src_dir, file_)
             dst_file = os.path.join(dst_dir, file_)
             if os.path.exists(dst_file):
                 # in case of the src and dst are the same file
-                if os.path.samefile(src_file, dst_file):
+                if filecmp.cmp(src_file, dst_file):
                     continue
                 os.rename(dst_file, add_before_ext(dst_file,
                                                    ' v' + datetime.datetime.fromtimestamp(os.path.getmtime(dst_file))
