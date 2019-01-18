@@ -77,7 +77,7 @@ def recursive_old_dir_move(root_src_dir, root_dst_dir):
                 if os.path.samefile(src_file, dst_file):
                     continue
                 os.rename(dst_file, add_before_ext(dst_file,
-                                                   ' v' + datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
+                                                   ' v' + datetime.datetime.fromtimestamp(os.path.getmtime(dst_file))
                                                    .astimezone(local_timezone).strftime(time_fmt)))
             shutil.move(src_file, dst_dir)
     shutil.rmtree(root_src_dir)
