@@ -139,7 +139,7 @@ class Course:
             proc_args = ["rclone", "sync", self.course_dir, dest["drive"] + ":" + dest["path"]]
             if args.dryrun:
                 proc_args.append("-n")
-            sync_proc = subprocess.run(proc_args, capture_output=True, text=True, check=True)
+            sync_proc = subprocess.run(proc_args, capture_output=True, text=True)
             if sync_proc.stderr:
                 print("Failed to sync", self.course_dict['name'], "to", dest["drive"])
                 print(sync_proc.stderr)
