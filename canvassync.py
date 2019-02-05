@@ -136,12 +136,13 @@ class Course:
         for dest in self.rclone:
             if args.verbosity >= 1:
                 print("  Uploading to", dest["drive"])
-            rclone = ["rclone", "sync", self.course_dir, dest["drive"] + ":" + dest["path"]]
+            proc_args = ["rclone", "sync", self.course_dir, dest["drive"] + ":" + dest["path"]]
             if args.dryrun:
-                rclone.append("-n")
-            rsync_error = subprocess.run(rclone, capture_output=True, text=True).stderr
-            if rsync_error:
-                print(rsync_error)
+                proc_args.append("-n")
+            sync_proc = subprocess.run(proc_args, capture_output=True, text=True, check=True)
+            if sync_proc.stderr:
+                print("Failed to sync", self.course_dict['name'], "to", dest["drive"])
+                print(sync_proc.stderr)
 
     def _parse_folder(self, folder):
         # Create subfolders
