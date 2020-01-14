@@ -56,6 +56,7 @@ def do_all_pages(req_url, headers, method_to_run):
     while req_url != '':
         # Downloading files in the respective folders
         response = requests.get(req_url, headers=headers)
+        response.raise_for_status()
         try:
             req_url = response.links['next']['url']
         except KeyError:
@@ -89,7 +90,9 @@ class Course:
         self.access_token = config["tokens"][cconfig["access_token"]]
         self.rclone = cconfig["rclone"]
         self.headers = {'Authorization': 'Bearer ' + self.access_token}
-        self.course_dict = requests.get(base_url + 'courses/' + self.course_id, headers=self.headers).json()
+        r_course = requests.get(base_url + 'courses/' + self.course_id, headers=self.headers)
+        r_course.raise_for_status()
+        self.course_dict = r_course.json()
         self.folder_dict = {}
         self.file_set = set()
         self.skipped, self.updated, self.downloaded, self.errors = 0, 0, 0, 0
