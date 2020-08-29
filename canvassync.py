@@ -14,8 +14,8 @@ import datetime
 import pytz
 import os
 import shutil
-import json
 import subprocess
+import yaml
 
 
 def getfile_insensitive(path):
@@ -31,7 +31,7 @@ def isfile_insensitive(path):
     return getfile_insensitive(path) is not None
 
 
-def add_before_ext(file_name, end)->str:
+def add_before_ext(file_name, end) -> str:
     temp_name = file_name
     pos = temp_name.rfind('.')
     if pos == -1:
@@ -231,8 +231,8 @@ if __name__ == '__main__':
     statsbycourse = []
     base_dir = os.path.dirname(__file__)
     update_config = False
-    with open(os.path.join(base_dir, "settings.json"), "r+", encoding='utf-8') as cf:
-        config = json.load(cf)
+    with open(os.path.join(base_dir, "settings.yaml"), "r+", encoding='utf-8') as cf:
+        config = yaml.safe_load(cf)
         local_timezone = pytz.timezone(config["timezone"])
         base_url = config["base_url"]
         time_fmt = config["time_fmt"]
@@ -241,17 +241,16 @@ if __name__ == '__main__':
             course.sync_local()
             course.onto_local()
             course.sync_cloud()
-            statsbycourse.append(
-                '  ' + course.course_dict['name'] + ': '
-                + str(course.downloaded) + ' new, '
-                + str(course.updated) + ' updated, '
-                + str(course.skipped) + ' skipped, '
-                + str(course.errors) + ' errors')
+            statsbycourse.append(f"  {course.course_dict['name']}: "
+                                 f"{course.downloaded} new, "
+                                 f"{course.updated} updated, "
+                                 f"{course.skipped} skipped, "
+                                 f"{course.errors} errors\n")
         if args.verbosity >= 1:
-            print('\nSUMMARY:')
+            print('SUMMARY:')
             for line in statsbycourse:
                 print(line)
         if update_config:
             cf.seek(0)
-            json.dump(config, cf, indent=4)
+            yaml.dump(config, cf, encoding="utf-8")
             cf.truncate()

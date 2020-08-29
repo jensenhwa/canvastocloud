@@ -1,0 +1,23 @@
+base_url: https://umich.instructure.com/api/v1/
+courses:
+- access_token: mine
+  id: 123456
+  rclone:
+  - drive: onedrive
+    path: /Documents/EECS203
+- access_token: mine
+  id: 456789
+  name: eecs_4_lyfe
+  rclone:
+  - drive: gdrive
+    path: /Canvas/EECS280
+- access_token: mine2
+  id: 123789
+  rclone:
+  - drive: onedrive
+    path: /Documents/EECS281
+time_fmt: '%Y-%m-%dT%H:%M:%S'
+timezone: America/Detroit
+tokens:
+  mine: <access_token>
+  mine2: <other_access_token>

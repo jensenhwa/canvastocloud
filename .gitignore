@@ -1,6 +1,6 @@
 */
 *.log
-settings.json
+settings.yaml
 
 # work in progress
 config.py
