@@ -163,6 +163,8 @@ class Course:
             if args.verbosity >= 1:
                 print("  Uploading to", dest["drive"])
             proc_args = ["rclone", "sync", self.course_dir, dest["drive"] + ":" + dest["path"]]
+            if dest["drive"] == "TonyPanOneDrive":
+                proc_args.append("--tpslimit=1")
             if args.dryrun:
                 proc_args.append("-n")
             sync_proc = subprocess.run(proc_args, capture_output=True, text=True)
