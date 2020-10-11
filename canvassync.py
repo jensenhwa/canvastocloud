@@ -7,14 +7,15 @@ by Jensen Hwa
 since October 2018
 """
 import argparse
-import requests
-import filecmp
-import tempfile
 import datetime
-import pytz
+import filecmp
 import os
 import shutil
 import subprocess
+import tempfile
+
+import pytz
+import requests
 import yaml
 
 

@@ -4,21 +4,10 @@ Easy-to-use, versatile, platform-independent program that downloads course files
 Works best when run from an always-on, internet-connected machine such as a Raspberry Pi.
 
 ## Prerequisites
-This tool requires [rclone](https://rclone.org/downloads/) along with Python 3.7 or later, with the modules `requests` `pytz`, and `pyyaml`.
-Once you have all of these installed, you should be able to run the following commands without errors:
-```
-$ rclone version
-rclone v1.44
-- os/arch: linux/arm
-- go version: go1.11.1
-$ python3.7
-Python 3.7.2 (default, Dec 28 2018, 03:13:11) 
-[GCC 6.3.0 20170516] on linux
-Type "help", "copyright", "credits" or "license" for more information.
->>> import requests
->>> import pytz
->>> import pyyaml
->>> quit()
+This tool requires [rclone](https://rclone.org/downloads/) along with Python 3.7 or later. Install
+Python dependencies with pip:
+```bash
+$ pip3 install -r requirements.txt
 ```
 
 ## Quick start
