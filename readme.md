@@ -1,6 +1,7 @@
 # Canvas2Cloud Sync Tool
 
 Easy-to-use, versatile, platform-independent program that downloads course files from Canvas and syncs them to your cloud storage of choice. Gracefully handles incompatible filenames and preserves deleted/outdated files in a separate folder.
+Handles content stored in Modules as well.
 Works best when run from an always-on, internet-connected machine such as a Raspberry Pi.
 
 ## Prerequisites
@@ -32,6 +33,7 @@ $ pip3 install -r requirements.txt
     ```
 11. Copy the number at the end. This is the course id.
 12. In the settings file, edit the `id` of one of the courses to this value. Make sure the `access_token` key refers to the name in front of the actual token you pasted in step 6.
+13. If you want to sync content from the Modules page instead of the Files page, add `modules: true` to the corresponding course in the settings file.
 13. For the `rclone` key, change the drive to the remote name you set in step 2, and change the path to wherever you want your course files to appear relative to your cloud storage.
 14. Repeat steps 10-13 for each course. You can have as many `courses`, `tokens`, or `rclone` entries you want.
 15. Delete any default entries you aren't using.

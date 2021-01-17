@@ -13,6 +13,8 @@ import os
 import shutil
 import subprocess
 import tempfile
+from enum import Enum
+from pathlib import Path
 
 import pytz
 import requests
@@ -43,17 +45,23 @@ def add_before_ext(file_name, end) -> str:
 
 
 def download(file, dest, request_headers):
-    r = requests.get(file['url'], headers=request_headers, stream=True)
-    if r.status_code == 200:
-        with open(dest, 'wb') as fd:
-            for chunk in r.iter_content(chunk_size=128):
-                fd.write(chunk)
-        os.utime(dest, (file["_time"].timestamp(), file["_time"].timestamp()))
+    if file['url'].startswith('URL:'):
+        with open(dest, 'w') as fd:
+            fd.write(f"[InternetShortcut]\nURL={file['url'][4:]}\n")
+    elif file['url'].startswith('SubHeader:'):
+        Path(dest).touch()
     else:
-        raise ConnectionError('Non-200 status code', file['display_name'])
+        r = requests.get(file['url'], headers=request_headers, stream=True)
+        if r.status_code == 200:
+            with open(dest, 'wb') as fd:
+                for chunk in r.iter_content(chunk_size=128):
+                    fd.write(chunk)
+            os.utime(dest, (file["_time"].timestamp(), file["_time"].timestamp()))
+        else:
+            raise ConnectionError('Non-200 status code', file['display_name'])
 
 
-def do_all_pages(req_url, headers, method_to_run):
+def do_all_pages(req_url, headers, method_to_run, *const_args):
     while req_url != '':
         # Downloading files in the respective folders
         response = requests.get(req_url, headers=headers)
@@ -63,7 +71,7 @@ def do_all_pages(req_url, headers, method_to_run):
         except KeyError:
             req_url = ''
         for thing in response.json():
-            method_to_run(thing)
+            method_to_run(thing, *const_args)
 
 
 def recursive_old_dir_move(root_src_dir, root_dst_dir):
@@ -85,9 +93,17 @@ def recursive_old_dir_move(root_src_dir, root_dst_dir):
 
 
 class Course:
+    class Type(Enum):
+        FILES = 1
+        MODULES = 2
+
     def __init__(self, cconfig):
         global update_config
         self.course_id = str(cconfig["id"])
+        if "modules" in cconfig:
+            self.type = Course.Type.MODULES
+        else:
+            self.type = Course.Type.FILES
         self.access_token = config["tokens"][cconfig["access_token"]]
         self.rclone = cconfig["rclone"]
         self.headers = {'Authorization': 'Bearer ' + self.access_token}
@@ -102,6 +118,8 @@ class Course:
         if "name" not in cconfig:
             update_config = True
             cconfig["name"] = self.course_dict['name'].replace(":", "-")
+            if self.type == Course.Type.MODULES:
+                cconfig["name"] += " Modules"
         self.course_dir = os.path.join(base_dir, cconfig["name"])
         if not os.path.isdir(self.course_dir):
             if args.verbosity >= 1:
@@ -111,10 +129,14 @@ class Course:
     def sync_local(self):
         if args.verbosity >= 1:
             print("  Syncing")
-        folders_request_url = base_url + 'courses/' + self.course_id + '/folders?per_page=999999'
-        do_all_pages(folders_request_url, self.headers, self._parse_folder)
-        files_request_url = base_url + 'courses/' + self.course_id + '/files?per_page=999999'
-        do_all_pages(files_request_url, self.headers, self._parse_file)
+        if self.type == Course.Type.MODULES:
+            modules_request_url = f"{base_url}courses/{self.course_id}/modules"
+            do_all_pages(modules_request_url, self.headers, self._parse_module)
+        else:
+            folders_request_url = base_url + 'courses/' + self.course_id + '/folders?per_page=999999'
+            do_all_pages(folders_request_url, self.headers, self._parse_folder)
+            files_request_url = base_url + 'courses/' + self.course_id + '/files?per_page=999999'
+            do_all_pages(files_request_url, self.headers, self._parse_file)
 
     def onto_local(self):
         for root, dirnames, filenames in os.walk(self.course_dir):
@@ -147,6 +169,37 @@ class Course:
             if sync_proc.stderr:
                 print("Failed to sync", self.course_dict['name'], "to", dest["drive"])
                 print(sync_proc.stderr)
+
+    def _parse_module(self, module):
+        folder_name = module['name']
+        folder_dir = os.path.join(self.course_dir, folder_name)
+        self.folder_dict[module['id']] = folder_dir
+        if not os.path.isdir(folder_dir):
+            if args.verbosity >= 1:
+                print('  Creating', folder_dir)
+            os.makedirs(folder_dir)
+
+        items_request_url = f"{base_url}courses/{self.course_id}/modules/{module['id']}/items"
+        do_all_pages(items_request_url, self.headers, self._parse_moduleitem, module['id'])
+
+    def _parse_moduleitem(self, moduleitem, moduleid):
+        if moduleitem['type'] == 'File':
+            r = requests.get(moduleitem['url'], headers=self.headers)
+            r.raise_for_status()
+            file = r.json()
+        elif moduleitem['type'] == 'SubHeader':
+            file = {'url': f"SubHeader:{moduleitem['title']}",
+                    'display_name': moduleitem['title'],
+                    'modified_at': datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    'updated_at': datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+        else:
+            file = {'url': f"URL:{moduleitem['html_url']}",
+                    'display_name': f"{moduleitem['title']}.url",
+                    'modified_at': datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    'updated_at': datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+        file['display_name'] = f"{moduleitem['position']}{moduleitem['indent']*'~'} {file['display_name']}"
+        file['folder_id'] = moduleid
+        self._parse_file(file)
 
     def _parse_folder(self, folder):
         # Create subfolders
