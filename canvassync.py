@@ -20,6 +20,8 @@ import pytz
 import requests
 import yaml
 
+s = requests.Session()
+
 
 def getfile_insensitive(path):
     directory, filename = os.path.split(path)
@@ -51,7 +53,7 @@ def download(file, dest, request_headers):
     elif file['url'].startswith('SubHeader:'):
         Path(dest).touch()
     else:
-        r = requests.get(file['url'], headers=request_headers, stream=True)
+        r = s.get(file['url'], headers=request_headers, stream=True)
         if r.status_code == 200:
             with open(dest, 'wb') as fd:
                 for chunk in r.iter_content(chunk_size=128):
@@ -64,7 +66,7 @@ def download(file, dest, request_headers):
 def do_all_pages(req_url, headers, method_to_run, *const_args):
     while req_url != '':
         # Downloading files in the respective folders
-        response = requests.get(req_url, headers=headers)
+        response = s.get(req_url, headers=headers)
         response.raise_for_status()
         try:
             req_url = response.links['next']['url']
@@ -107,7 +109,7 @@ class Course:
         self.access_token = config["tokens"][cconfig["access_token"]]
         self.rclone = cconfig["rclone"]
         self.headers = {'Authorization': 'Bearer ' + self.access_token}
-        r_course = requests.get(base_url + 'courses/' + self.course_id, headers=self.headers)
+        r_course = s.get(base_url + 'courses/' + self.course_id, headers=self.headers)
         r_course.raise_for_status()
         self.course_dict = r_course.json()
         self.folder_dict = {}
@@ -184,7 +186,7 @@ class Course:
 
     def _parse_moduleitem(self, moduleitem, moduleid):
         if moduleitem['type'] == 'File':
-            r = requests.get(moduleitem['url'], headers=self.headers)
+            r = s.get(moduleitem['url'], headers=self.headers)
             r.raise_for_status()
             file = r.json()
         elif moduleitem['type'] == 'SubHeader':
